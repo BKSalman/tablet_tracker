@@ -17,18 +17,18 @@ fn main() {
     .insert_resource(WindowDescriptor {
         height: HEIGHT,
         width: HEIGHT * RESOLUTION,
-        position: Some(Vec2::new(400.0, 200.0)),
-        title: "Letters".into(),
+        position: Some(Vec2::new(400.0, 200.0)), // optional
+        title: "Tablet tracker".into(), // optional
         present_mode: PresentMode::Fifo,
-        #[cfg(target_arch = "wasm32")]
-        canvas: Some("#bevy-canvas".to_string()),
         ..Default::default()
     })
     .add_plugins(DefaultPlugins)
-    .add_plugin(DebugPlugin)
+    
+    // plugin for debugging the entities and components using "bevy-inspector-egui"
+    .add_plugin(DebugPlugin) 
     .add_startup_system(spawn_camera)
     .add_startup_system(load_image)
-    .add_system(mouse)
+    .add_system(image_movement)
     .run();
 }
 
@@ -60,17 +60,28 @@ fn load_image(
     .insert(Hand);
 }
 
-fn mouse(
+fn image_movement(
     windows: Res<Windows>,
     mut hand_query: Query<&mut Transform, With<Hand>>,
 ) {
+    // get the image
     let mut hand_transform = hand_query.single_mut();
+    // get the mouse location in a tuple
+    // mouse.0 = x mouse.1 = y
     let mouse: (i32, i32) = Enigo::mouse_location();
+
+    // get the window resource from bevy
     let window = windows.get_primary().unwrap();
 
+    // check if available
+    // then get the position of the window
     if let Some(position) = window.position() {
+        // subtract the position of the window from the mouse location
+        // to get the relative location
         let x = mouse.0 - position.x;
         let y = mouse.1 - position.y;
+
+        // move the image
         hand_transform.translation.x = x as f32;
         hand_transform.translation.y = window.height() - y as f32;
     } else {
