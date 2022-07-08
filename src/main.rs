@@ -9,8 +9,11 @@ mod debug;
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const HEIGHT: f32 = 640.0;
 
-#[derive(Component, Debug, Inspectable)]
-pub struct Hand;
+#[derive(Default, Component, Debug, Inspectable)]
+pub struct Hand {
+    x_offset: f32,
+    y_offset: f32,
+}
 
 fn main() {
     App::new()
@@ -22,6 +25,7 @@ fn main() {
         present_mode: PresentMode::Fifo,
         ..Default::default()
     })
+    .insert_resource(ClearColor(Color::NONE)) // transparent background
     .add_plugins(DefaultPlugins)
     
     // plugin for debugging the entities and components using "bevy-inspector-egui"
@@ -57,15 +61,18 @@ fn load_image(
     })
     .insert(Name::new("Hand"))
     .insert(Transform::from_xyz(0., 0., 0.))
-    .insert(Hand);
+    .insert(Hand{
+        x_offset: 0.,
+        y_offset: 32.
+    });
 }
 
 fn image_movement(
     windows: Res<Windows>,
-    mut hand_query: Query<&mut Transform, With<Hand>>,
+    mut hand_query: Query<(&Hand, &mut Transform)>,
 ) {
     // get the image
-    let mut hand_transform = hand_query.single_mut();
+    let (hand, mut hand_transform) = hand_query.single_mut();
     // get the mouse location in a tuple
     // mouse.0 = x mouse.1 = y
     let mouse: (i32, i32) = Enigo::mouse_location();
@@ -75,15 +82,21 @@ fn image_movement(
 
     // check if available
     // then get the position of the window
+    
     if let Some(position) = window.position() {
         // subtract the position of the window from the mouse location
         // to get the relative location
-        let x = mouse.0 - position.x;
-        let y = mouse.1 - position.y;
 
+        let x = (mouse.0 - position.x) as f32 + hand.x_offset; // the more offset the more the images goes to the right
+        let y = (mouse.1 - position.y) as f32 - hand.y_offset; // the more offset the more the images goes up
+        
+        // rotating the image to add hand like effect
+        hand_transform.rotation = Quat::from_rotation_z((mouse.0 - position.x) as f32 / window.width());
+        hand_transform.rotation = Quat::from_rotation_z((mouse.1 - position.y) as f32 / window.height());
+        
         // move the image
-        hand_transform.translation.x = x as f32;
-        hand_transform.translation.y = window.height() - y as f32;
+        hand_transform.translation.x = x;
+        hand_transform.translation.y = window.height() - y;
     } else {
         
     }
