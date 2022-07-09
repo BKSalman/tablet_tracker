@@ -7,7 +7,7 @@
 it animates a hand to show on stream (on [OBS](https://obsproject.com/)) for Vtubers or anyone while they're making art!
 
 # Plans
-plans are gonna be in the [TODO issue](#1)
+plans are gonna be in the TODO issue (#1)
 
 # What did you use?
 I wrote it in Rust
