@@ -1,0 +1,9 @@
+(
+    x_offset: -9.,
+    y_offset: 35.,
+    size: Vec2(
+            0., // X -- 0 for auto-size
+            0., // Y -- 0 for auto-size
+        ),
+    background:"NONE", // GREEN OR NONE
+)
