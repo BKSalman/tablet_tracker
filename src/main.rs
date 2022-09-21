@@ -50,7 +50,7 @@ fn main() {
         .insert_resource(WindowDescriptor {
             height: HEIGHT,
             width: HEIGHT * RESOLUTION,
-            position: WindowPosition::Centered(MonitorSelection::Primary), // optional
+            // position: WindowPosition::Centered(MonitorSelection::Current), // optional
             title: "Tablet tracker".into(),                                // optional
             present_mode: PresentMode::Fifo,
             ..Default::default()
@@ -162,44 +162,31 @@ fn image_movement(
 ) {
     for event in reader.iter() {
         match event.0.event_type {
-            rdev::EventType::MouseMove { x: mouse_x, y: mouse_y } => {
-                // get the window resource from bevy
-
-                let window = windows.get_primary();
-
-                // get the mouse location in a tuple
-
-                // get the image
-
+            rdev::EventType::MouseMove {
+                x: mouse_x,
+                y: mouse_y,
+            } => {
                 if let Ok((hand, mut hand_transform)) = hand_query.get_single_mut() {
-                    match window {
-                        Some(window) => {
-                            // check if available
-                            // then get the position of the window
-                            if let Some(position) = window.position() {
-                                // subtract the position of the window from the mouse location
-                                // to get the relative location
+                    if let Some(window) = windows.get_primary() {
+                        if let Some(position) = window.position() {
+                            // subtract the position of the window from the mouse location
+                            // to get the relative location
+                            let x = (mouse_x as f32 - position.x as f32) + hand.config.x_offset; // the more offset the more the images goes to the right
+                            let y = (mouse_y as f32 - position.y as f32) - hand.config.y_offset; // the more offset the more the images goes up
 
-                                let x = (mouse_x as f32 - position.x as f32) + hand.config.x_offset; // the more offset the more the images goes to the right
-                                let y = (mouse_y as f32 - position.y as f32) - hand.config.y_offset; // the more offset the more the images goes up
+                            // rotating the image to add hand like effect
+                            hand_transform.rotation = Quat::from_rotation_z(
+                                ((y * 0.8) / window.height()) - (((mouse_x as f32 - position.x as f32) - hand.config.x_offset) * 0.6) / window.width()
+                            );
 
-                                // rotating the image to add hand like effect
-                                hand_transform.rotation = Quat::from_rotation_z(
-                                    ((y * 0.8) / window.height()) - (((mouse_x as f32 - position.x as f32) - hand.config.x_offset) * 0.6) / window.width()
-                                );
-
-                                // move the image
-                                hand_transform.translation.x = x;
-                                hand_transform.translation.y = window.height() - y;
-                            } else {
-
-                            }
-                        },
-                        None =>{}
+                            // move the image
+                            hand_transform.translation.x = x;
+                            hand_transform.translation.y = window.height() - y;
+                        }
                     }
                 }
             }
-            _=> {}
+            _ => {}
         }
     }
 }
