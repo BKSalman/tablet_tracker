@@ -1,4 +1,4 @@
-# Mouse tracker
+# Tablet Tracker
 ## still WIP
 
 
