@@ -15,6 +15,6 @@ and used:
 
 - bevy for creating the window, and getting window info (like position, width, height), event loop, and handling image rendering
 
-- enigo to get the mouse location ( you could just get it directly from the windows api if you wish )
+- rdev for mouse events
 
-- bevy_inspector_egui for debugging
+- bevy_inspector_egui for debugging ( not working right now )
