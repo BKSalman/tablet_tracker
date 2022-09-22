@@ -1,6 +1,6 @@
 (
-    x_offset: -9.,
-    y_offset: 35.,
+    x_offset: -4.,
+    y_offset: 5.,
     size: Vec2(
             0., // X -- 0 for auto-size
             0., // Y -- 0 for auto-size

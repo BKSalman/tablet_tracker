@@ -1,3 +1,6 @@
+/// plugin for debugging the entities and components using "bevy-inspector-egui"
+
+
 use bevy::prelude::*;
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
 

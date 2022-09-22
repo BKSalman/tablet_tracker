@@ -3232,9 +3232,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tablet_mouse"
+name = "tablet_tracker"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bevy",
  "bevy-inspector-egui",
  "crossbeam-channel",
