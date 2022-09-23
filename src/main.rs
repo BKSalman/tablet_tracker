@@ -6,14 +6,17 @@ use bevy::{
     window::{PresentMode, WindowId},
     winit::WinitWindows,
 };
+use bevy_inspector_egui::Inspectable;
 use crossbeam_channel::{unbounded, Receiver};
 use std::thread;
-// use debug::DebugPlugin;
-// use bevy_inspector_egui::prelude::*;
 use rdev::listen;
-use tablet_tracker::{Config, RonLoader};
 use winit::window::Icon;
-// mod debug;
+
+use tablet_tracker::{Config, RonLoader};
+use debug::DebugPlugin;
+use ui::UIPlugin;
+mod ui;
+mod debug;
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const HEIGHT: f32 = 640.0;
@@ -24,7 +27,7 @@ pub struct StreamReceiver(Receiver<rdev::Event>);
 #[derive(Debug)]
 struct StreamEvent(rdev::Event);
 
-#[derive(Default, Component, Debug)]
+#[derive(Default, Component, Debug, Inspectable)]
 pub struct Hand;
 
 #[derive(Default)]
@@ -54,7 +57,8 @@ fn main() {
         .insert_resource(FilterMode::Nearest)
         .insert_resource(ClearColor)
         // plugin for debugging the entities and components using "bevy-inspector-egui"
-        // .add_plugin(DebugPlugin)
+        .add_plugin(DebugPlugin)
+        .add_plugin(UIPlugin)
         .add_startup_system_to_stage(StartupStage::PreStartup, set_window_icon)
         .add_startup_system_to_stage(StartupStage::PreStartup, setup)
         .add_startup_system(setup_events)
@@ -92,10 +96,7 @@ fn set_window_icon(windows: NonSend<WinitWindows>) {
     primary.set_window_icon(Some(icon));
 }
 
-fn load_image(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn load_image(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture: Handle<Image> = asset_server.load("Hand.png");
 
     let sprite = Sprite {
@@ -125,11 +126,17 @@ fn config(
             println!("{event:?}");
         }
         if let Ok((_hand, mut hand_sprite)) = hand_query.get_single_mut() {
-            if config.size.x > 0. || config.size.y > 0. {
-                hand_sprite.custom_size = Some(config.size);
-            } else {
-                hand_sprite.custom_size = Some(Vec2::splat(338.));
+            let mut hand_size = Vec2::splat(338.);
+
+            if config.size.x > 0. {
+                hand_size.x = config.size.x;
             }
+
+            if config.size.y > 0. {
+                hand_size.y = config.size.y;
+            }
+
+            hand_sprite.custom_size = Some(hand_size);
         }
 
         let bg = config.background.clone();

@@ -1,5 +1,6 @@
-use bevy::{prelude::*, asset::{AssetLoader, LoadContext, LoadedAsset}, reflect::TypeUuid, utils::BoxedFuture};
+use bevy::{prelude::*, asset::{AssetLoader, LoadContext, LoadedAsset}, reflect::TypeUuid, utils::BoxedFuture, winit::WinitWindows, window::WindowId};
 use serde::Deserialize;
+use winit::window::Icon;
 
 #[derive(Default, Component, Debug, Deserialize, TypeUuid)]
 #[ uuid = "9b511981-28ac-4888-8261-f94d6fb19b25" ]
@@ -28,4 +29,21 @@ impl AssetLoader for RonLoader {
             Ok(())
         })
     }
+}
+
+pub fn set_window_icon(windows: NonSend<WinitWindows>) {
+    let primary = windows.get_window(WindowId::primary()).unwrap();
+
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open("assets/bksalmSalute.png")
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+
+    let icon = Icon::from_rgba(icon_rgba, icon_width, icon_height).unwrap();
+
+    primary.set_window_icon(Some(icon));
 }
