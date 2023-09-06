@@ -8,15 +8,15 @@ use bevy::{
 };
 use bevy_inspector_egui::Inspectable;
 use crossbeam_channel::{unbounded, Receiver};
-use std::thread;
 use rdev::listen;
+use std::thread;
 use winit::window::Icon;
 
-use tablet_tracker::{Config, RonLoader};
 use debug::DebugPlugin;
+use tablet_tracker::{Config, RonLoader};
 use ui::UIPlugin;
-mod ui;
 mod debug;
+mod ui;
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const HEIGHT: f32 = 640.0;
@@ -57,7 +57,7 @@ fn main() {
         .insert_resource(FilterMode::Nearest)
         .insert_resource(ClearColor)
         // plugin for debugging the entities and components using "bevy-inspector-egui"
-        .add_plugin(DebugPlugin)
+        // .add_plugin(DebugPlugin)
         .add_plugin(UIPlugin)
         .add_startup_system_to_stage(StartupStage::PreStartup, set_window_icon)
         .add_startup_system_to_stage(StartupStage::PreStartup, setup)

@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use ron::ser::PrettyConfig;
+use tablet_tracker::Config;
+
+use crate::ConfHandle;
 
 pub struct UIPlugin;
 
@@ -6,6 +10,7 @@ impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(toggle_menu)
+            .add_system(display_values)
             .add_system(button_system);
     }
 }
@@ -16,38 +21,67 @@ struct MenuState {
 }
 
 #[derive(Component)]
+struct XValue;
+
+#[derive(Component)]
+struct YValue;
+
+#[derive(Component)]
 struct Container;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
-const INCREASEX: &str = "Increase x size";
-const INCREASEY: &str = "Increase y size";
+const INCREASEX: &str = "+x";
+const INCREASEY: &str = "+y";
 
-const DECREASEX: &str = "Decrease x size";
-const DECREASEY: &str = "Decrease y size";
+const DECREASEX: &str = "-x";
+const DECREASEY: &str = "-y";
+
+const SAVE_TO_FILE: &str = "Save to file";
 
 fn button_system(
     mut interaction_query: Query<
         (&Interaction, &mut UiColor, &Children),
         (Changed<Interaction>, With<Button>),
     >,
-    mut text_query: Query<&mut Text>,
+    conf_handle: ResMut<ConfHandle>,
+    mut config_asset: ResMut<Assets<Config>>,
+    text_query: Query<&Text>,
 ) {
     for (interaction, mut color, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+        let text = text_query.get(children[0]).unwrap();
         match *interaction {
             Interaction::Clicked => {
-                text.sections[0].value = "Press".to_string();
+                if let Some(config) = config_asset.get_mut(&conf_handle.handle) {
+                    if text.sections[0].value == INCREASEX {
+                        config.x_offset += 1.;
+                    } else if text.sections[0].value == DECREASEX {
+                        config.x_offset -= 1.;
+                    } else if text.sections[0].value == INCREASEY {
+                        config.y_offset += 1.;
+                    } else if text.sections[0].value == DECREASEY {
+                        config.y_offset -= 1.;
+                    } else if text.sections[0].value == SAVE_TO_FILE {
+                        let ron_options = ron::options::Options::default();
+                        let confing_str = ron_options
+                            .to_string_pretty(config, PrettyConfig::default())
+                            .unwrap();
+
+                        std::fs::write(
+                            std::env::current_dir().unwrap().join("assets/config.ron"),
+                            confing_str,
+                        )
+                        .unwrap();
+                    }
+                }
                 *color = PRESSED_BUTTON.into();
             }
             Interaction::Hovered => {
-                text.sections[0].value = "Hover".to_string();
                 *color = HOVERED_BUTTON.into();
             }
             Interaction::None => {
-                text.sections[0].value = INCREASEX.to_string();
                 *color = NORMAL_BUTTON.into();
             }
         }
@@ -73,6 +107,16 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Container)
         .with_children(|parent| {
             parent
+                .spawn_bundle(TextBundle::from_section(
+                    "0",
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 40.0,
+                        color: Color::rgb(0.9, 0.9, 0.9),
+                    },
+                ))
+                .insert(XValue);
+            parent
                 .spawn_bundle(ButtonBundle {
                     style: Style {
                         size: Size::new(Val::Px(150.0), Val::Px(65.0)),
@@ -93,7 +137,39 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     ));
                 });
-                parent.spawn_bundle(ButtonBundle {
+            parent
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    color: NORMAL_BUTTON.into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle::from_section(
+                        DECREASEX,
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+            parent
+                .spawn_bundle(TextBundle::from_section(
+                    "0",
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 40.0,
+                        color: Color::rgb(0.9, 0.9, 0.9),
+                    },
+                ))
+                .insert(YValue);
+            parent
+                .spawn_bundle(ButtonBundle {
                     style: Style {
                         size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                         align_items: AlignItems::Center,
@@ -113,6 +189,48 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     ));
                 });
+            parent
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    color: NORMAL_BUTTON.into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle::from_section(
+                        DECREASEY,
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+            parent
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    color: NORMAL_BUTTON.into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle::from_section(
+                        SAVE_TO_FILE,
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
         });
 }
 
@@ -125,5 +243,22 @@ fn toggle_menu(keyboard: Res<Input<KeyCode>>, mut node_query: Query<&mut Style, 
                 node.display = Display::Flex;
             }
         }
+    }
+}
+
+fn display_values(
+    mut x_query: Query<&mut Text, With<XValue>>,
+    mut y_query: Query<&mut Text, (With<YValue>, Without<XValue>)>,
+    conf_handle: Res<ConfHandle>,
+    config_asset: Res<Assets<Config>>,
+) {
+    let config = config_asset.get(&conf_handle.handle);
+    let y_offset = config.map(|c| c.y_offset).unwrap_or(0.);
+    let x_offset = config.map(|c| c.x_offset).unwrap_or(0.);
+    for mut text in x_query.iter_mut() {
+        text.sections[0].value = x_offset.to_string();
+    }
+    for mut text in y_query.iter_mut() {
+        text.sections[0].value = y_offset.to_string();
     }
 }
